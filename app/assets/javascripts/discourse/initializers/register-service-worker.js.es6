@@ -2,27 +2,17 @@ export default {
   name: 'register-service-worker',
 
   initialize() {
-    // only allow service worker on android for now
-    if (!/(android)/i.test(navigator.userAgent)) {
+    const isSecure = (document.location.protocol === 'https:') ||
+      (location.hostname === "localhost");
 
-      // remove old service worker
-      if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          for(let registration of registrations) {
-            registration.unregister();
-          };
-        });
-      }
-
-    } else {
-
-      const isSecure = (document.location.protocol === 'https:') ||
-        (location.hostname === "localhost");
-
-
-      if (isSecure && ('serviceWorker' in navigator)) {
-        navigator.serviceWorker.register(`${Discourse.BaseUri}/service-worker.js`);
-      }
+    if (isSecure && ('serviceWorker' in navigator)) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register(Discourse.ServiceWorkerURL)
+          .catch(error => {
+            Ember.Logger.info(`Failed to register Service Worker: ${error}`);
+          });
+      });
     }
   }
 };
